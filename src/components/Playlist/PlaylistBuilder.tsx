@@ -75,6 +75,7 @@ const PlaylistBuilder: React.FC = () => {
         setSeenTrackIds(newIds);
 
         setTracks(newTracks);
+        console.log("Fetched new tracks:", newTracks);
         setError(null);
       }
     } catch (err: any) {
@@ -145,6 +146,19 @@ const PlaylistBuilder: React.FC = () => {
                   {track.artists?.map((artist) => artist.name).join(", ") ||
                     "Unknown Artist"}
                 </p>
+                <div className="track-genres">
+                  {(track.genres || []).length > 0 ? (
+                    (track.genres || []).slice(0, 4).map((genre, index) => (
+                      <span key={index} className="genre-tag">
+                        {genre}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="genre-tag genre-tag--muted">
+                      Uncategorized
+                    </span>
+                  )}
+                </div>
                 <div className="track-meta">
                   <span className="release-year">
                     {track.album.release_date?.substring(0, 4)}
@@ -153,7 +167,7 @@ const PlaylistBuilder: React.FC = () => {
                     className="popularity"
                     title={`Popularity: ${track.popularity}/100`}
                   >
-                    {Array(Math.ceil(track.popularity / 20))
+                    {Array(Math.max(1, Math.ceil(track.popularity / 20)))
                       .fill("★")
                       .join("")}
                   </span>

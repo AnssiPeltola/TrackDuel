@@ -22,9 +22,14 @@ class SpotifyService {
       throw new Error("No Spotify access token found");
     }
 
-    const url = endpoint.startsWith("http")
-      ? endpoint
-      : `${SPOTIFY_API_BASE}${endpoint}`;
+    // Add a separator for query parameters
+    const separator = endpoint.includes("?") ? "&" : "?";
+    // Append the locale parameter to get English results
+    const localizedEndpoint = `${endpoint}${separator}locale=en-US`;
+
+    const url = localizedEndpoint.startsWith("http")
+      ? localizedEndpoint
+      : `${SPOTIFY_API_BASE}${localizedEndpoint}`;
 
     console.log(`Making API request to: ${url}`);
 
@@ -34,6 +39,7 @@ class SpotifyService {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
+          "Accept-Language": "en-US",
         },
         body: body ? JSON.stringify(body) : undefined,
       });
@@ -242,6 +248,7 @@ class SpotifyService {
 
   /**
    * Fetches randomized tracks from a Spotify playlist without loading the entire playlist.
+   * Also fetches genre information for each track.
    */
   public static async fetchRandomPlaylistTracks(
     playlistId: string,
@@ -289,8 +296,45 @@ class SpotifyService {
       // Shuffle the collected tracks for extra randomness
       tracks = this.shuffleArray(tracks);
 
-      // Return only the requested number of tracks
-      return tracks.slice(0, limit);
+      // Limit to requested number of tracks before fetching artist details
+      const limitedTracks = tracks.slice(0, limit);
+
+      // Extract all artist IDs to fetch
+      const artistIds = limitedTracks.flatMap((track) =>
+        track.artists.map((artist) => artist.id)
+      );
+
+      // Fetch artist details for all artists in a single batch request
+      const artists = await this.getMultipleArtists(artistIds);
+      // console.log(artists);
+
+      // Create a map of artist ID to genres for easy lookup
+      const artistGenres = new Map();
+      artists.forEach((artist) => {
+        artistGenres.set(artist.id, artist.genres);
+      });
+
+      // Add genres to each track based on its artists
+      const tracksWithGenres = limitedTracks.map((track) => {
+        // Add genres to each artist
+        const updatedArtists = track.artists.map((artist) => ({
+          ...artist,
+          genres: artistGenres.get(artist.id) || [],
+        }));
+
+        // Combine all genres from all artists and remove duplicates
+        const allGenres = [
+          ...new Set(updatedArtists.flatMap((artist) => artist.genres || [])),
+        ];
+
+        return {
+          ...track,
+          artists: updatedArtists,
+          genres: allGenres,
+        };
+      });
+
+      return tracksWithGenres;
     } catch (error) {
       console.error("Error fetching random playlist tracks:", error);
       return [];
@@ -306,6 +350,54 @@ class SpotifyService {
       [array[i], array[j]] = [array[j], array[i]];
     }
     return array;
+  }
+
+  /**
+   * Fetches artist details including genres
+   */
+  public static async getArtist(artistId: string) {
+    try {
+      const artistData = await this.apiRequest<{
+        id: string;
+        name: string;
+        genres: string[];
+        popularity: number;
+      }>(`/artists/${artistId}`);
+
+      return artistData;
+    } catch (error) {
+      console.error(`Error fetching artist data for ${artistId}:`, error);
+      // Return a minimal object with empty genres array to prevent errors
+      return { id: artistId, name: "", genres: [], popularity: 0 };
+    }
+  }
+
+  /**
+   * Fetches multiple artists in a single request to minimize API calls
+   * Spotify allows up to 50 artist IDs per request
+   */
+  public static async getMultipleArtists(artistIds: string[]) {
+    if (!artistIds.length) return [];
+
+    try {
+      // Spotify allows up to 50 IDs per request
+      const uniqueIds = [...new Set(artistIds)].slice(0, 50);
+      const idsParam = uniqueIds.join(",");
+
+      const response = await this.apiRequest<{
+        artists: Array<{
+          id: string;
+          name: string;
+          genres: string[];
+          popularity: number;
+        }>;
+      }>(`/artists?ids=${idsParam}`);
+
+      return response.artists;
+    } catch (error) {
+      console.error("Error fetching multiple artists:", error);
+      return [];
+    }
   }
 }
 
