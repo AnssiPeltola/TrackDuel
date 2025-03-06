@@ -185,3 +185,26 @@
   color: #ffcc00;
   letter-spacing: 1px;
 }
+
+.track-genres {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 8px 0;
+}
+
+.genre-tag {
+  background-color: #333;
+  color: #1db954;
+  font-size: 0.7rem;
+  padding: 2px 8px;
+  border-radius: 12px;
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.genre-tag--muted {
+  background-color: #222;
+  color: #999;
+  font-style: italic;
+}
