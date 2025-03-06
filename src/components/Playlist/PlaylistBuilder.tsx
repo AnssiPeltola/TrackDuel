@@ -1,52 +1,16 @@
 import React, { useEffect, useState } from "react";
 import SpotifyService from "../../services/spotify.service";
 import { Track } from "../../types/spotify.types";
-import Slider from "rc-slider";
-import "rc-slider/assets/index.css";
 import "./PlaylistBuilder.css";
 
-const currentYear = new Date().getFullYear();
-
-// Define popularity presets
-const popularityPresets = {
-  niche: [0, 35] as [number, number],
-  moderate: [35, 65] as [number, number],
-  popular: [65, 100] as [number, number],
-  all: [0, 100] as [number, number],
-};
-
 const PlaylistBuilder: React.FC = () => {
-  // State declarations
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [tracks, setTracks] = useState<Track[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [selectedTracks, setSelectedTracks] = useState<Track[]>([]);
   const [seenTrackIds, setSeenTrackIds] = useState<Set<string>>(new Set());
 
-  // Customization state
-  const [showSettings, setShowSettings] = useState<boolean>(false);
-  const [yearRange, setYearRange] = useState<[number, number]>([
-    1950,
-    currentYear,
-  ]);
-  const [popularityPreset, setPopularityPreset] = useState<string>("all");
-  const [popularity, setPopularity] = useState<[number, number]>(
-    popularityPresets.all
-  );
-  const [useFullRange, setUseFullRange] = useState<boolean>(true);
-
-  // Effect to update popularity range when preset changes
-  useEffect(() => {
-    if (popularityPreset === "niche") {
-      setPopularity(popularityPresets.niche);
-    } else if (popularityPreset === "moderate") {
-      setPopularity(popularityPresets.moderate);
-    } else if (popularityPreset === "popular") {
-      setPopularity(popularityPresets.popular);
-    } else {
-      setPopularity(popularityPresets.all);
-    }
-  }, [popularityPreset]);
+  const playlistId = "69fEt9DN5r4JQATi52sRtq";
 
   // Effect to fetch initial data
   useEffect(() => {
@@ -57,7 +21,6 @@ const PlaylistBuilder: React.FC = () => {
         // Test the token first
         try {
           await SpotifyService.getCurrentUser();
-          console.log("Token is valid");
         } catch (error) {
           console.error("Token validation error:", error);
           setError("Authentication error. Please log in again.");
@@ -75,30 +38,6 @@ const PlaylistBuilder: React.FC = () => {
     loadInitialData();
   }, []);
 
-  // Function to handle popularity preset change
-  const handlePopularityPresetChange = (value: number | number[]) => {
-    // Ensure we're working with a single number
-    const singleValue = Array.isArray(value) ? value[0] : value;
-
-    if (singleValue <= 25) {
-      setPopularityPreset("niche");
-    } else if (singleValue <= 50) {
-      setPopularityPreset("moderate");
-    } else if (singleValue <= 75) {
-      setPopularityPreset("popular");
-    } else {
-      setPopularityPreset("all");
-    }
-  };
-
-  // Function to toggle between fixed ranges and full range
-  const togglePopularityRange = () => {
-    setUseFullRange(!useFullRange);
-    if (!useFullRange) {
-      setPopularityPreset("all");
-    }
-  };
-
   // Function to fetch new tracks
   const fetchTracks = async () => {
     try {
@@ -111,15 +50,10 @@ const PlaylistBuilder: React.FC = () => {
       while (attempts < 3 && newTracks.length < 2) {
         attempts++;
 
-        // Use custom parameters if user has selected any
-        const customParams = {
-          yearRange: yearRange,
-          popularity: popularity,
-          limit: 4, // Fetch more than needed to filter
-        };
-
-        const fetchedTracks = await SpotifyService.fetchCustomTracks(
-          customParams
+        // Fetch tracks from the playlist
+        const fetchedTracks = await SpotifyService.fetchRandomPlaylistTracks(
+          playlistId,
+          4 // Fetch more than needed to have buffer for filtering
         );
 
         // Filter out tracks we've already seen
@@ -133,9 +67,7 @@ const PlaylistBuilder: React.FC = () => {
       }
 
       if (newTracks.length === 0) {
-        setError(
-          "No new tracks found. Please try again or adjust your filters."
-        );
+        setError("No new tracks found. Please try again.");
       } else {
         // Add the new track IDs to our seen set
         const newIds = new Set(seenTrackIds);
@@ -143,7 +75,6 @@ const PlaylistBuilder: React.FC = () => {
         setSeenTrackIds(newIds);
 
         setTracks(newTracks);
-        console.log("Fetched tracks:", newTracks);
         setError(null);
       }
     } catch (err: any) {
@@ -169,13 +100,9 @@ const PlaylistBuilder: React.FC = () => {
     setTracks((prev) => prev.filter((track) => track.id !== selectedTrack.id));
 
     // If we've selected all current tracks, fetch more
-    if (tracks.length <= 1) {
+    if (tracks.length <= 2) {
       fetchTracks();
     }
-  };
-
-  const toggleSettings = () => {
-    setShowSettings(!showSettings);
   };
 
   if (isLoading) {
@@ -197,120 +124,6 @@ const PlaylistBuilder: React.FC = () => {
   return (
     <div className="playlist-builder">
       <h1>TrackDuel</h1>
-
-      <div className="settings-toggle">
-        <button onClick={toggleSettings} className="settings-button">
-          {showSettings ? "Hide Settings" : "Customize Tracks"}
-        </button>
-      </div>
-
-      {showSettings && (
-        <div className="track-settings">
-          <h2>Customize Your TrackDuel</h2>
-
-          <div className="setting-section">
-            <h3>Release Year Range</h3>
-            <div className="year-range">
-              <span>{yearRange[0]}</span>
-              <div className="range-slider">
-                <Slider
-                  range
-                  min={1950}
-                  max={currentYear}
-                  value={yearRange}
-                  onChange={(value) => setYearRange(value as [number, number])}
-                  trackStyle={[{ backgroundColor: "#1db954" }]}
-                  handleStyle={[
-                    { borderColor: "#1db954" },
-                    { borderColor: "#1db954" },
-                  ]}
-                  railStyle={{ backgroundColor: "#555" }}
-                />
-              </div>
-              <span>{yearRange[1]}</span>
-            </div>
-          </div>
-
-          <div className="setting-section">
-            <h3>
-              Popularity{" "}
-              {useFullRange ? "Mode" : `(${popularity[0]} - ${popularity[1]})`}
-            </h3>
-
-            <div className="popularity-toggle">
-              <button
-                onClick={togglePopularityRange}
-                className={`toggle-button ${useFullRange ? "active" : ""}`}
-              >
-                {useFullRange ? "Using Full Range" : "Use Full Range (0-100)"}
-              </button>
-            </div>
-
-            {!useFullRange && (
-              <div className="popularity-range">
-                <span>Niche</span>
-                <div className="range-slider">
-                  <Slider
-                    min={0}
-                    max={100}
-                    step={25}
-                    marks={{
-                      0: "Niche",
-                      25: "",
-                      50: "Moderate",
-                      75: "",
-                      100: "Popular",
-                    }}
-                    value={
-                      popularityPreset === "niche"
-                        ? 25
-                        : popularityPreset === "moderate"
-                        ? 50
-                        : popularityPreset === "popular"
-                        ? 75
-                        : 100
-                    }
-                    onChange={handlePopularityPresetChange}
-                    trackStyle={{ backgroundColor: "#1db954" }}
-                    handleStyle={{ borderColor: "#1db954" }}
-                    railStyle={{ backgroundColor: "#555" }}
-                  />
-                </div>
-                <span>Popular</span>
-              </div>
-            )}
-
-            <div className="preset-display">
-              {!useFullRange && (
-                <>
-                  <span>Current selection: </span>
-                  <strong>
-                    {popularityPreset === "niche"
-                      ? "Niche (0-35)"
-                      : popularityPreset === "moderate"
-                      ? "Moderate (35-65)"
-                      : popularityPreset === "popular"
-                      ? "Popular (65-100)"
-                      : "All (0-100)"}
-                  </strong>
-                </>
-              )}
-              {useFullRange && (
-                <span>Including all popularity ranges (0-100)</span>
-              )}
-            </div>
-          </div>
-
-          <div className="setting-actions">
-            <button onClick={fetchTracks} className="apply-button">
-              Apply & Get New Tracks
-            </button>
-            <button onClick={toggleSettings} className="cancel-button">
-              Close Settings
-            </button>
-          </div>
-        </div>
-      )}
 
       <div className="track-comparison">
         <h2>Choose your favorite track</h2>
