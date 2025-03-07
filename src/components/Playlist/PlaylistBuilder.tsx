@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import SpotifyService from "../../services/spotify.service";
 import { Track } from "../../types/spotify.types";
 import "./PlaylistBuilder.css";
+import { EmbeddedSpotifyPlayer } from "../EmbeddedSpotifyPlayer/EmbeddedSpotifyPlayer";
+import VolumeWarning from "../VolumeWarning/VolumeWarning";
 
 const PlaylistBuilder: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -125,55 +127,69 @@ const PlaylistBuilder: React.FC = () => {
   return (
     <div className="playlist-builder">
       <h1>TrackDuel</h1>
-
+      <VolumeWarning />
       <div className="track-comparison">
         <h2>Choose your favorite track</h2>
         <div className="tracks-container">
-          {tracks.map((track) => (
-            <div
-              key={track.id}
-              className="track-card"
-              onClick={() => handleTrackSelect(track)}
-            >
-              <img
-                src={track.album?.images?.[0]?.url || "/placeholder-album.png"}
-                alt={track.album?.name || "Album"}
-                className="album-cover"
-              />
-              <div className="track-info">
-                <h3>{track.name}</h3>
-                <p>
-                  {track.artists?.map((artist) => artist.name).join(", ") ||
-                    "Unknown Artist"}
-                </p>
-                <div className="track-genres">
-                  {(track.genres || []).length > 0 ? (
-                    (track.genres || []).slice(0, 4).map((genre, index) => (
-                      <span key={index} className="genre-tag">
-                        {genre}
+          {tracks.map((track, index) => (
+            <React.Fragment key={track.id}>
+              <div
+                className="track-card"
+                onClick={() => handleTrackSelect(track)}
+              >
+                {/* Track card content */}
+                <img
+                  src={
+                    track.album?.images?.[0]?.url || "/placeholder-album.png"
+                  }
+                  alt={track.album?.name || "Album"}
+                  className="album-cover"
+                />
+                <div className="track-info">
+                  <h3>{track.name}</h3>
+                  <p>
+                    {track.artists?.map((artist) => artist.name).join(", ") ||
+                      "Unknown Artist"}
+                  </p>
+                  <div className="track-genres">
+                    {(track.genres || []).length > 0 ? (
+                      (track.genres || []).slice(0, 3).map((genre, index) => (
+                        <span key={index} className="genre-tag">
+                          {genre}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="genre-tag genre-tag--muted">
+                        Uncategorized
                       </span>
-                    ))
-                  ) : (
-                    <span className="genre-tag genre-tag--muted">
-                      Uncategorized
+                    )}
+                  </div>
+                  <div className="track-meta">
+                    <span className="release-year">
+                      {track.album.release_date?.substring(0, 4)}
                     </span>
-                  )}
-                </div>
-                <div className="track-meta">
-                  <span className="release-year">
-                    {track.album.release_date?.substring(0, 4)}
-                  </span>
-                  <span
-                    className="popularity"
-                    title={`Popularity: ${track.popularity}/100`}
-                  >
-                    {Array(Math.max(1, Math.ceil(track.popularity / 20)))
-                      .fill("★")
-                      .join("")}
-                  </span>
+                    <span
+                      className="popularity"
+                      title={`Popularity: ${track.popularity}/100`}
+                    >
+                      {Array(Math.max(1, Math.ceil(track.popularity / 20)))
+                        .fill("★")
+                        .join("")}
+                    </span>
+                  </div>
+                  <div className="embedded-player">
+                    <EmbeddedSpotifyPlayer trackId={track.id} />
+                  </div>
                 </div>
               </div>
-            </div>
+
+              {/* Add VS element between tracks */}
+              {index === 0 && tracks.length > 1 && (
+                <div className="vs-badge">
+                  <div className="vs-text">VS</div>
+                </div>
+              )}
+            </React.Fragment>
           ))}
         </div>
         <div className="playlist-section">
