@@ -4,12 +4,22 @@ import { Track } from "../../types/spotify.types";
 import "./PlaylistBuilder.css";
 import { EmbeddedSpotifyPlayer } from "../EmbeddedSpotifyPlayer/EmbeddedSpotifyPlayer";
 import VolumeWarning from "../VolumeWarning/VolumeWarning";
+import { useAppDispatch, useAppSelector } from "../../hooks/reduxHooks";
+import {
+  addTrack,
+  removeTrack,
+  clearPlaylist,
+} from "../../store/playlistSlice";
+import { store } from "../../store/store";
 
 const PlaylistBuilder: React.FC = () => {
+  const dispatch = useAppDispatch();
+  const selectedTracks = useAppSelector((state) => state.playlist.tracks);
+
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [tracks, setTracks] = useState<Track[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [selectedTracks, setSelectedTracks] = useState<Track[]>([]);
+  // const [selectedTracks, setSelectedTracks] = useState<Track[]>([]);
   const [seenTrackIds, setSeenTrackIds] = useState<Set<string>>(new Set());
 
   const playlistId = "69fEt9DN5r4JQATi52sRtq";
@@ -88,15 +98,22 @@ const PlaylistBuilder: React.FC = () => {
     }
   };
 
-  // Function to handle track selection
+  // Add a function to handle track selection
   const handleTrackSelect = (selectedTrack: Track) => {
-    // Add to selected tracks
-    setSelectedTracks((prev) => {
-      // First check if this track is already in the selected tracks
-      if (prev.some((track) => track.id === selectedTrack.id)) {
-        return prev;
-      }
-      return [...prev, selectedTrack];
+    console.log("Before adding track to Redux state:", {
+      selectedTrackId: selectedTrack.id,
+      selectedTrackName: selectedTrack.name,
+      currentReduxTracks: selectedTracks.length,
+    });
+
+    // Add to selected tracks in Redux
+    dispatch(addTrack(selectedTrack));
+
+    // Log after dispatch - note that Redux state won't be updated immediately in this log
+    console.log("Track added to playlist:", {
+      track: selectedTrack.name,
+      artist: selectedTrack.artists?.[0]?.name,
+      id: selectedTrack.id,
     });
 
     // Remove from current tracks
@@ -104,7 +121,49 @@ const PlaylistBuilder: React.FC = () => {
 
     // If we've selected all current tracks, fetch more
     if (tracks.length <= 2) {
+      console.log("Fetching more tracks after selection");
       fetchTracks();
+    }
+  };
+
+  // Add a function to handle track removal
+  const handleRemoveTrack = (trackId: string) => {
+    console.log("Removing track from Redux state:", {
+      trackId,
+      currentReduxTracks: selectedTracks.length,
+      remainingTracksAfterRemoval: selectedTracks.filter(
+        (t) => t.id !== trackId
+      ).length,
+    });
+
+    dispatch(removeTrack(trackId));
+
+    // We need to get the latest state in the timeout, not use the closed-over value
+    setTimeout(() => {
+      // Get the current state directly from the store
+      const currentState = store.getState();
+      console.log("Redux state after track removal:", {
+        tracksInPlaylist: currentState.playlist.tracks.length,
+        trackIds: currentState.playlist.tracks.map((t) => t.id),
+      });
+    }, 0);
+  };
+
+  // // Add this hook to log state changes
+  // useEffect(() => {
+  //   console.log("Selected tracks in Redux updated:", {
+  //     trackCount: selectedTracks.length,
+  //     tracks: selectedTracks.map(
+  //       (t) => `${t.name} (${t.artists?.[0]?.name || "Unknown"})`
+  //     ),
+  //   });
+  // }, [selectedTracks]);
+
+  // Add a function to clear playlist
+  const handleClearPlaylist = () => {
+    // Use window.confirm explicitly to avoid ESLint error
+    if (window.confirm("Are you sure you want to clear your playlist?")) {
+      dispatch(clearPlaylist());
     }
   };
 
@@ -186,14 +245,25 @@ const PlaylistBuilder: React.FC = () => {
               {/* Add VS element between tracks */}
               {index === 0 && tracks.length > 1 && (
                 <div className="vs-badge">
-                  <div className="vs-text">VS</div>
+                  <div className="vs-text">⚔️</div>
                 </div>
               )}
             </React.Fragment>
           ))}
         </div>
         <div className="playlist-section">
-          <h3>Your Playlist ({selectedTracks.length})</h3>
+          <div className="playlist-header">
+            <h3>Your Playlist ({selectedTracks.length})</h3>
+            {selectedTracks.length > 0 && (
+              <button
+                className="clear-playlist-btn"
+                onClick={handleClearPlaylist}
+                title="Clear all tracks"
+              >
+                Clear All
+              </button>
+            )}
+          </div>
           {selectedTracks.length > 0 ? (
             <ul className="selected-tracks">
               {selectedTracks.map((track) => (
@@ -205,18 +275,36 @@ const PlaylistBuilder: React.FC = () => {
                     alt={track.album?.name || "Album"}
                     className="mini-cover"
                   />
-                  <div>
+                  <div className="track-details">
                     <strong>{track.name}</strong>
                     <span>
                       {track.artists?.map((artist) => artist.name).join(", ") ||
                         "Unknown Artist"}
                     </span>
                   </div>
+                  <button
+                    className="remove-track-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRemoveTrack(track.id);
+                    }}
+                    title="Remove from playlist"
+                  >
+                    ✕
+                  </button>
                 </li>
               ))}
             </ul>
           ) : (
             <p>Select your favorite tracks to build a playlist</p>
+          )}
+
+          {selectedTracks.length >= 3 && (
+            <div className="playlist-actions">
+              <button className="save-playlist-btn">
+                Create Spotify Playlist
+              </button>
+            </div>
           )}
         </div>
       </div>
