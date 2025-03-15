@@ -11,6 +11,7 @@ import {
   clearPlaylist,
 } from "../../store/playlistSlice";
 import { store } from "../../store/store";
+import ConfirmationModal from "../ConfirmationModal/ConfirmationModal";
 
 const PlaylistBuilder: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -21,6 +22,7 @@ const PlaylistBuilder: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   // const [selectedTracks, setSelectedTracks] = useState<Track[]>([]);
   const [seenTrackIds, setSeenTrackIds] = useState<Set<string>>(new Set());
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState<boolean>(false);
 
   const playlistId = "69fEt9DN5r4JQATi52sRtq";
 
@@ -159,12 +161,20 @@ const PlaylistBuilder: React.FC = () => {
   //   });
   // }, [selectedTracks]);
 
-  // Add a function to clear playlist
+  // Updated clear playlist function to open modal
   const handleClearPlaylist = () => {
-    // Use window.confirm explicitly to avoid ESLint error
-    if (window.confirm("Are you sure you want to clear your playlist?")) {
-      dispatch(clearPlaylist());
-    }
+    setIsConfirmModalOpen(true);
+  };
+
+  // New function to handle confirmation
+  const handleConfirmClear = () => {
+    dispatch(clearPlaylist());
+    setIsConfirmModalOpen(false);
+  };
+
+  // New function to handle cancel
+  const handleCancelClear = () => {
+    setIsConfirmModalOpen(false);
   };
 
   if (isLoading) {
@@ -263,6 +273,16 @@ const PlaylistBuilder: React.FC = () => {
                 Clear All
               </button>
             )}
+            <ConfirmationModal
+              isOpen={isConfirmModalOpen}
+              title="Clear Playlist"
+              message="Are you sure you want to clear all tracks from your playlist? This action cannot be undone."
+              confirmText="Clear Playlist"
+              cancelText="Cancel"
+              onConfirm={handleConfirmClear}
+              onCancel={handleCancelClear}
+              isDanger={true}
+            />
           </div>
           {selectedTracks.length > 0 ? (
             <ul className="selected-tracks">
