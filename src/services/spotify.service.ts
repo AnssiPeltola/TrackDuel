@@ -70,7 +70,10 @@ class SpotifyService {
   /**
    * Get the current user's profile to test the token
    */
-  public static async getCurrentUser() {
+  public static async getCurrentUser(): Promise<{
+    id: string;
+    [key: string]: any;
+  }> {
     return await this.apiRequest("/me");
   }
 
@@ -397,6 +400,136 @@ class SpotifyService {
     } catch (error) {
       console.error("Error fetching multiple artists:", error);
       return [];
+    }
+  }
+
+  /**
+   * Creates a new playlist for the current user
+   * @param name The name for the new playlist
+   * @param descripwtion Optional description for the playlist
+   * @returns The created playlist object including id and external URLs
+   */
+  public static async createPlaylist(
+    name: string,
+    description: string = ""
+  ): Promise<{
+    id: string;
+    external_urls: {
+      spotify: string;
+    };
+    name: string;
+  }> {
+    try {
+      // First get the user's ID
+      const user = await this.getCurrentUser();
+
+      // Then create a playlist
+      const response = await this.apiRequest<{
+        id: string;
+        external_urls: {
+          spotify: string;
+        };
+        name: string;
+      }>(`/users/${user.id}/playlists`, "POST", {
+        name,
+        description,
+        public: false,
+      });
+
+      console.log("Playlist created:", response);
+      return response;
+    } catch (error) {
+      console.error("Error creating playlist:", error);
+      throw new Error(
+        error instanceof Error ? error.message : "Failed to create playlist"
+      );
+    }
+  }
+
+  /**
+   * Adds tracks to an existing playlist
+   * @param playlistId The ID of the playlist to add tracks to
+   * @param trackUris Array of Spotify track URIs to add
+   * @returns Success status with snapshot ID
+   */
+  public static async addTracksToPlaylist(
+    playlistId: string,
+    trackUris: string[]
+  ): Promise<{
+    snapshot_id: string;
+  }> {
+    try {
+      // Spotify API allows 100 tracks per request max, so we need to batch
+      const batchSize = 100;
+      let lastResponse = null;
+
+      // Process tracks in batches
+      for (let i = 0; i < trackUris.length; i += batchSize) {
+        const batch = trackUris.slice(i, i + batchSize);
+
+        console.log(
+          `Adding batch ${
+            Math.floor(i / batchSize) + 1
+          } of tracks to playlist (${batch.length} tracks)`
+        );
+
+        lastResponse = await this.apiRequest<{ snapshot_id: string }>(
+          `/playlists/${playlistId}/tracks`,
+          "POST",
+          {
+            uris: batch,
+          }
+        );
+      }
+
+      return lastResponse as { snapshot_id: string };
+    } catch (error) {
+      console.error("Error adding tracks to playlist:", error);
+      throw new Error(
+        error instanceof Error
+          ? error.message
+          : "Failed to add tracks to playlist"
+      );
+    }
+  }
+
+  /**
+   * Creates a playlist and adds tracks to it in one operation
+   * @param name Playlist name
+   * @param description Playlist description
+   * @param tracks Array of tracks to add
+   * @returns The created playlist details including URL
+   */
+  public static async createPlaylistWithTracks(
+    name: string,
+    description: string,
+    tracks: Track[]
+  ): Promise<{
+    id: string;
+    external_urls: {
+      spotify: string;
+    };
+    name: string;
+  }> {
+    try {
+      // First create the playlist
+      const playlist = await this.createPlaylist(name, description);
+
+      // Then add the tracks
+      if (tracks.length > 0) {
+        // Extract track URIs
+        const trackUris = tracks.map((track) => track.uri);
+        await this.addTracksToPlaylist(playlist.id, trackUris);
+      }
+
+      return playlist;
+    } catch (error) {
+      console.error("Error creating playlist with tracks:", error);
+      throw new Error(
+        error instanceof Error
+          ? error.message
+          : "Failed to create playlist with tracks"
+      );
     }
   }
 }

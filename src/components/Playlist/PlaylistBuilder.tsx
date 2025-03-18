@@ -258,7 +258,6 @@ const PlaylistBuilder: React.FC = () => {
                 </div>
               </div>
 
-              {/* Add VS element between tracks */}
               {index === 0 && tracks.length > 1 && (
                 <div className="vs-badge">
                   <div className="vs-text">⚔️</div>
