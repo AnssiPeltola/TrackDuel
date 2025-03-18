@@ -346,3 +346,66 @@
 .save-playlist-btn:hover {
   background-color: #1ed760;
 }
+
+/* Skip button styles */
+.skip-button-container {
+  display: flex;
+  justify-content: center;
+  margin: 1.5rem 0;
+}
+
+.skip-button {
+  background-color: #333;
+  color: #fff;
+  border: 2px solid #1db954;
+  border-radius: 30px;
+  padding: 10px 20px;
+  font-size: 0.9rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.skip-button:hover {
+  background-color: #444;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.skip-button:active {
+  transform: translateY(0);
+}
+
+.skip-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.skip-icon {
+  font-size: 1.2rem;
+  display: inline-block;
+  transition: transform 0.3s ease;
+}
+
+.skip-button:hover .skip-icon {
+  transform: rotate(180deg);
+}
+
+/* Add a loading state animation */
+.skip-button.loading .skip-icon {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
