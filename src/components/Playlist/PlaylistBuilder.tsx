@@ -177,6 +177,12 @@ const PlaylistBuilder: React.FC = () => {
     setIsConfirmModalOpen(false);
   };
 
+  // Skip tracks function
+  const handleSkipTracks = async () => {
+    console.log("Skipping current tracks...");
+    await fetchTracks();
+  };
+
   if (isLoading) {
     return <div className="loading">Loading tracks...</div>;
   }
@@ -260,6 +266,17 @@ const PlaylistBuilder: React.FC = () => {
               )}
             </React.Fragment>
           ))}
+        </div>
+        <div className="skip-button-container">
+          <button
+            className="skip-button"
+            onClick={handleSkipTracks}
+            disabled={isLoading}
+            title="Skip both tracks and get new ones"
+          >
+            <span className="skip-icon">↻</span>
+            Skip both tracks
+          </button>
         </div>
         <div className="playlist-section">
           <div className="playlist-header">
