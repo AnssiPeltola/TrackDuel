@@ -406,7 +406,7 @@ class SpotifyService {
   /**
    * Creates a new playlist for the current user
    * @param name The name for the new playlist
-   * @param descripwtion Optional description for the playlist
+   * @param description Optional description for the playlist
    * @returns The created playlist object including id and external URLs
    */
   public static async createPlaylist(
