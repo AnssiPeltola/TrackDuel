@@ -9,9 +9,13 @@ import {
   addTrack,
   removeTrack,
   clearPlaylist,
+  savePlaylistFailure,
+  savePlaylistRequest,
+  savePlaylistSuccess,
 } from "../../store/playlistSlice";
 import { store } from "../../store/store";
 import ConfirmationModal from "../ConfirmationModal/ConfirmationModal";
+import CreatePlaylistModal from "../CreatePlaylistModal/CreatePlaylistModal";
 
 const PlaylistBuilder: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -23,6 +27,12 @@ const PlaylistBuilder: React.FC = () => {
   // const [selectedTracks, setSelectedTracks] = useState<Track[]>([]);
   const [seenTrackIds, setSeenTrackIds] = useState<Set<string>>(new Set());
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState<boolean>(false);
+  const [isCreatePlaylistModalOpen, setIsCreatePlaylistModalOpen] =
+    useState<boolean>(false);
+  const [playlistCreationResult, setPlaylistCreationResult] = useState<{
+    url: string;
+    name: string;
+  } | null>(null);
 
   const playlistId = "69fEt9DN5r4JQATi52sRtq";
 
@@ -183,6 +193,52 @@ const PlaylistBuilder: React.FC = () => {
     await fetchTracks();
   };
 
+  const handleOpenCreatePlaylistModal = () => {
+    setIsCreatePlaylistModalOpen(true);
+  };
+
+  // In PlaylistBuilder.tsx, modify the handleCreatePlaylist function:
+  const handleCreatePlaylist = async (name: string, description: string) => {
+    try {
+      // Dispatch the save playlist request action
+      dispatch(savePlaylistRequest());
+
+      // Format the description to always include the app signature at the end
+      const formattedDescription = description
+        ? `${description} - Created with TrackDuel`
+        : "Created with TrackDuel";
+
+      // Create the playlist with the tracks and formatted description
+      const result = await SpotifyService.createPlaylistWithTracks(
+        name,
+        formattedDescription,
+        selectedTracks
+      );
+
+      // Rest of the function remains the same
+      setPlaylistCreationResult({
+        url: result.external_urls.spotify,
+        name: result.name,
+      });
+
+      dispatch(savePlaylistSuccess(result.id));
+
+      // Clear the playlist after a successful creation
+      setTimeout(() => {
+        dispatch(clearPlaylist());
+      }, 3000); // Extended time to ensure modal stays visible
+
+      return result.external_urls.spotify;
+    } catch (error) {
+      dispatch(
+        savePlaylistFailure(
+          error instanceof Error ? error.message : "Unknown error"
+        )
+      );
+      throw error;
+    }
+  };
+
   if (isLoading) {
     return <div className="loading">Loading tracks...</div>;
   }
@@ -337,12 +393,24 @@ const PlaylistBuilder: React.FC = () => {
 
           {selectedTracks.length >= 3 && (
             <div className="playlist-actions">
-              <button className="save-playlist-btn">
+              <button
+                className="save-playlist-btn"
+                onClick={handleOpenCreatePlaylistModal}
+              >
                 Create Spotify Playlist
               </button>
             </div>
           )}
         </div>
+        <CreatePlaylistModal
+          isOpen={isCreatePlaylistModalOpen}
+          onClose={() => setIsCreatePlaylistModalOpen(false)}
+          onConfirm={async (name, description) => {
+            const url = await handleCreatePlaylist(name, description);
+            return url;
+          }}
+          trackCount={selectedTracks.length}
+        />
       </div>
     </div>
   );
