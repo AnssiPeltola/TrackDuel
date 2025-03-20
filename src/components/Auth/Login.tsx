@@ -50,8 +50,38 @@ const Login: React.FC = () => {
     <div className="login-container">
       <div className="login-content">
         <h1>TrackDuel</h1>
-        <h2>Create playlists by comparing random genres</h2>
-        <p>Connect with your Spotify account to get started</p>
+        <h2>Discover music through battles, save victories as playlists</h2>
+
+        <div className="steps-container">
+          <h3>Three simple steps:</h3>
+
+          <div className="step-cards">
+            <div className="step-card">
+              <div className="step-number">1</div>
+              <div className="step-text">
+                <p>Listen to a pair of tracks go head-to-head</p>
+              </div>
+            </div>
+
+            <div className="step-card">
+              <div className="step-number">2</div>
+              <div className="step-text">
+                <p>Vote for your favorite to add it to your collection</p>
+              </div>
+            </div>
+
+            <div className="step-card">
+              <div className="step-number">3</div>
+              <div className="step-text">
+                <p>Discover new music while building your ultimate playlist</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <p className="connect-text">
+          Connect with your Spotify account to get started
+        </p>
 
         {error && <div className="error-message">{error}</div>}
 

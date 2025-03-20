@@ -26,6 +26,7 @@ const CreatePlaylistModal: React.FC<CreatePlaylistModalProps> = ({
   const [state, setState] = useState<ModalState>("prompt");
   const [playlistUrl, setPlaylistUrl] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string>("");
+  const [copied, setCopied] = useState(false);
 
   // Reset state when modal opens
   useEffect(() => {
@@ -71,6 +72,29 @@ const CreatePlaylistModal: React.FC<CreatePlaylistModalProps> = ({
         error instanceof Error ? error.message : "Failed to create playlist"
       );
       setState("error");
+    }
+  };
+
+  const handleCopyToClipboard = async (url: string) => {
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+
+      // Hide the "copied" message after 2 seconds
+      setTimeout(() => {
+        setCopied(false);
+      }, 2000);
+    } catch (err) {
+      console.error("Failed to copy: ", err);
+      // Fallback for older browsers
+      const textArea = document.createElement("textarea");
+      textArea.value = url;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textArea);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     }
   };
 
@@ -124,6 +148,7 @@ const CreatePlaylistModal: React.FC<CreatePlaylistModalProps> = ({
                     maxLength={275}
                     rows={3}
                     placeholder="Add your personal note here..."
+                    className="no-resize"
                   />
                 </div>
 
@@ -164,16 +189,39 @@ const CreatePlaylistModal: React.FC<CreatePlaylistModalProps> = ({
               <div className="success-icon">✓</div>
               <p>Your playlist "{name}" has been created successfully!</p>
 
-              <div className="playlist-link-container">
-                <a
-                  href={playlistUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="playlist-link"
-                >
-                  Open in Spotify
-                  <span className="external-link-icon">↗</span>
-                </a>
+              <div className="playlist-actions">
+                <div className="playlist-link-container">
+                  <a
+                    href={playlistUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="playlist-link"
+                  >
+                    Open in Spotify
+                    <span className="external-link-icon">↗</span>
+                  </a>
+                </div>
+
+                <div className="share-container">
+                  <button
+                    className="share-button"
+                    onClick={() => handleCopyToClipboard(playlistUrl)}
+                    title="Copy playlist link to clipboard"
+                  >
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                    >
+                      <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z" />
+                    </svg>
+                    Share Playlist
+                  </button>
+                  {copied && (
+                    <span className="copied-tooltip">Link copied!</span>
+                  )}
+                </div>
               </div>
 
               <p className="small-text">
