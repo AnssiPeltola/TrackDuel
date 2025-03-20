@@ -2,6 +2,8 @@
 
 A fun and engaging way to discover music and build playlists through song-vs-song battles.
 
+<img src="public/trackduel-demo.gif" alt="TrackDuel Demo" width="70%">
+
 ![React](https://img.shields.io/badge/React-19.0.0-61DAFB?logo=react&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-4.9.5-3178C6?logo=typescript&logoColor=white)
 ![Redux Toolkit](https://img.shields.io/badge/Redux_Toolkit-2.6.1-764ABC?logo=redux&logoColor=white)
