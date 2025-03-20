@@ -409,3 +409,15 @@
     transform: rotate(360deg);
   }
 }
+
+.disabled-during-tour {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.tooltip-note {
+  font-size: 0.8rem;
+  color: #aaa;
+  display: block;
+  margin-top: 4px;
+}

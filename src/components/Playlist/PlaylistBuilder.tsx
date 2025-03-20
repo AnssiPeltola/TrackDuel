@@ -16,6 +16,7 @@ import {
 import { store } from "../../store/store";
 import ConfirmationModal from "../ConfirmationModal/ConfirmationModal";
 import CreatePlaylistModal from "../CreatePlaylistModal/CreatePlaylistModal";
+import AppTour from "../AppTour/AppTour";
 
 const PlaylistBuilder: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -33,6 +34,7 @@ const PlaylistBuilder: React.FC = () => {
     url: string;
     name: string;
   } | null>(null);
+  const [showTour, setShowTour] = useState(false);
 
   const playlistId = "69fEt9DN5r4JQATi52sRtq";
 
@@ -61,6 +63,24 @@ const PlaylistBuilder: React.FC = () => {
 
     loadInitialData();
   }, []);
+
+  useEffect(() => {
+    // Check if this is the first visit and tracks are loaded
+    const hasSeenTour = localStorage.getItem("trackduelTourComplete");
+    if (!hasSeenTour && !isLoading && tracks.length > 0) {
+      // Wait a moment for UI to fully render
+      const timer = setTimeout(() => setShowTour(true), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [isLoading, tracks]);
+
+  const handleTourComplete = () => {
+    setShowTour(false);
+  };
+
+  const handleTourSkip = () => {
+    setShowTour(false);
+  };
 
   // Function to fetch new tracks
   const fetchTracks = async () => {
@@ -257,6 +277,11 @@ const PlaylistBuilder: React.FC = () => {
 
   return (
     <div className="playlist-builder">
+      <AppTour
+        isActive={showTour}
+        onComplete={handleTourComplete}
+        onSkip={handleTourSkip}
+      />
       <h1>TrackDuel</h1>
       <VolumeWarning />
       <div className="track-comparison">
@@ -391,11 +416,14 @@ const PlaylistBuilder: React.FC = () => {
             <p>Select your favorite tracks to build a playlist</p>
           )}
 
-          {selectedTracks.length >= 3 && (
+          {(selectedTracks.length >= 3 || showTour) && (
             <div className="playlist-actions">
               <button
-                className="save-playlist-btn"
+                className={`save-playlist-btn ${
+                  selectedTracks.length < 3 ? "disabled-during-tour" : ""
+                }`}
                 onClick={handleOpenCreatePlaylistModal}
+                disabled={selectedTracks.length < 3}
               >
                 Create Spotify Playlist
               </button>
@@ -411,6 +439,15 @@ const PlaylistBuilder: React.FC = () => {
           }}
           trackCount={selectedTracks.length}
         />
+      </div>
+      <div className="help-container">
+        <button
+          className="help-button"
+          onClick={() => setShowTour(true)}
+          title="Take the app tour"
+        >
+          <span>?</span>
+        </button>
       </div>
     </div>
   );
