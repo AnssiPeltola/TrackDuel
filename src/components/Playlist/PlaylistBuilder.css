@@ -107,6 +107,7 @@
   border-radius: 4px;
   margin-right: 1rem;
   object-fit: cover;
+  flex-shrink: 0;
 }
 
 .selected-track div {
@@ -270,6 +271,30 @@
   }
 }
 
+@media (max-width: 480px) {
+  .playlist-section {
+    padding: 1rem;
+  }
+
+  .mini-cover {
+    width: 40px;
+    height: 40px;
+    margin-right: 0.7rem;
+  }
+
+  .track-details strong {
+    font-size: 0.9rem;
+  }
+
+  .track-details span {
+    font-size: 0.75rem;
+  }
+
+  .remove-track-btn {
+    padding: 4px 6px;
+  }
+}
+
 .playlist-header {
   display: flex;
   justify-content: space-between;
@@ -299,11 +324,35 @@
   align-items: center;
   padding: 0.8rem 0;
   border-bottom: 1px solid #333;
+  width: 100%;
+  overflow: hidden;
 }
-
 .track-details {
   flex: 1;
-  margin-right: 8px;
+  min-width: 0;
+  margin-right: 10px;
+  overflow: hidden;
+}
+
+.track-details strong {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+  margin-bottom: 0.3rem;
+  text-align: left;
+}
+
+.track-details span {
+  display: block;
+  font-size: 0.8rem;
+  color: #b3b3b3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+  text-align: left;
 }
 
 .remove-track-btn {
@@ -312,12 +361,14 @@
   border: none;
   font-size: 1rem;
   cursor: pointer;
-  padding: 5px;
+  padding: 5px 8px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
+  flex-shrink: 0;
+  margin-left: auto;
 }
 
 .remove-track-btn:hover {
