@@ -267,7 +267,12 @@
   }
 
   .vs-badge {
-    margin: 1rem 0; /* Add vertical space when stacked */
+    margin: 1rem 0;
+  }
+
+  .track-card {
+    width: 100%;
+    max-width: 300px;
   }
 }
 
@@ -292,6 +297,20 @@
 
   .remove-track-btn {
     padding: 4px 6px;
+  }
+}
+
+@media (hover: hover) {
+  .track-card:hover {
+    transform: scale(1.05);
+    background-color: #333;
+  }
+}
+
+/* For mobile/touch devices, add a tap state instead */
+@media (hover: none) {
+  .track-card:active {
+    background-color: #333;
   }
 }
 
