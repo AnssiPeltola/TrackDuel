@@ -17,6 +17,7 @@ import { store } from "../../store/store";
 import ConfirmationModal from "../ConfirmationModal/ConfirmationModal";
 import CreatePlaylistModal from "../CreatePlaylistModal/CreatePlaylistModal";
 import AppTour from "../AppTour/AppTour";
+import Logout from "../Auth/Logout";
 
 const PlaylistBuilder: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -282,6 +283,9 @@ const PlaylistBuilder: React.FC = () => {
         onComplete={handleTourComplete}
         onSkip={handleTourSkip}
       />
+      <div className="header-controls">
+        <Logout />
+      </div>
       <h1>TrackDuel</h1>
       <VolumeWarning />
       <div className="track-comparison">
